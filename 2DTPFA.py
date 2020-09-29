@@ -29,9 +29,12 @@ f_vec = np.zeros(num_nodes)
 A = np.zeros((num_nodes,num_nodes))
 def meshToVec(j,i)->int:
     return i*num_nodes_y + j
+
 def vecToMesh(h)->(int,int):
     return (h % num_nodes_y, math.floor(h/num_nodes_y))
+
 def computeFlux(j,i):
+    #computes the fluxes(-grad u) corresponding to cell j,i with forward euler.
     vec_i = meshToVec(j,i)
 
     north_i = meshToVec(j+1,i)
@@ -63,17 +66,18 @@ def computeFlux(j,i):
 
 
 def computeSource(j,i,x_d,y_d):
+    #Computes the source term by simple midpoint quadrature
     north_face = (nodes[j,i+1,0]-nodes[j,i-1,0])/2
     south_face = north_face
     east_face = (nodes[j+1,i,1]-nodes[j-1,i,1])/2
     west_face = east_face
     f_vec[meshToVec(j,i)] = f.subs([(x,x_d),(y,y_d)])*north_face*east_face
 
-
-
+#Loop trough the mesh and assemble the matrix.
 for i in range(num_nodes_x):
     for j in range(num_nodes_y):
         vec_i = meshToVec(j,i)
+        #Check if we are looking at a boundary cell
         if (i==0) or (i==num_nodes_x-1) or (j==0) or (j==num_nodes_y-1):
             A[vec_i,vec_i] = 1
             f_vec[vec_i] = 0
@@ -85,8 +89,6 @@ for i in range(num_nodes_x):
         u_fabric_vec[vec_i] = u_fabric.subs([(x,x_d),(y,y_d)])
         u_fabric_nodes[j,i] = u_fabric.subs([(x,x_d),(y,y_d)])
 print(A)
-
-#add boundaries
 
 
 u_vec = np.linalg.solve(A,f_vec)
